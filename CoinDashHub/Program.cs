@@ -1,3 +1,4 @@
+using Binance.Net.Clients;
 using Bybit.Net.Clients;
 using CoinDashHub.Accounts;
 using CoinDashHub.Configuration;
@@ -6,9 +7,6 @@ using CoinDashHub.Helpers;
 using CoinDashHub.Services;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.Hosting;
 
 namespace CoinDashHub
 {
@@ -23,7 +21,6 @@ namespace CoinDashHub
             if (configuration == null)
                 throw new InvalidOperationException("Missing configuration.");
 
-            // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddHostedService<CoinDashDataService>();
             builder.Services.AddSingleton<IEnumerable<IAccountDataProvider>>(sp =>
@@ -31,7 +28,7 @@ namespace CoinDashHub
                 List<IAccountDataProvider> accountDataProviders = new List<IAccountDataProvider>();
                 foreach (var account in configuration.Accounts)
                 {
-                    var accountDataProvider = CreateAccountDataProvider(account.Name, account, sp);
+                    var accountDataProvider = CreateAccountDataProvider(account, sp);
                     accountDataProviders.Add(accountDataProvider);
                 }
                 return accountDataProviders;
@@ -51,11 +48,9 @@ namespace CoinDashHub
             var lf = app.Services.GetRequiredService<ILoggerFactory>();
             ApplicationLogging.LoggerFactory = lf;
 
-            // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
@@ -69,7 +64,20 @@ namespace CoinDashHub
             app.Run();
         }
 
-        private static AccountDataProvider CreateAccountDataProvider(string name, Account account, IServiceProvider services)
+        private static AccountDataProvider CreateAccountDataProvider(Account account, IServiceProvider services)
+        {
+            switch (account.Exchange)
+            {
+                case Exchange.Bybit:
+                    return CreateBybitAccountDataProvider(account, services);
+                case Exchange.Binance:
+                    return CreateBinanceAccountDataProvider(account, services);
+                default:
+                    throw new ArgumentOutOfRangeException("Unsupported exchange");
+            }
+        }
+
+        private static AccountDataProvider CreateBybitAccountDataProvider(Account account, IServiceProvider services)
         {
             BybitRestClient client = new BybitRestClient(options =>
             {
@@ -87,7 +95,27 @@ namespace CoinDashHub
             var cdFuturesRestClient = new BybitCdFuturesRestClient(client, bybitCdFuturesRestClientLogger);
             var cdFuturesSocketClient = new BybitCdFuturesSocketClient(bybitSocketClient);
             var lf = services.GetRequiredService<ILoggerFactory>();
-            var accountDataProvider = new AccountDataProvider(name, cdFuturesRestClient, cdFuturesSocketClient, lf.CreateLogger<AccountDataProvider>());
+            var accountDataProvider = new AccountDataProvider(account.Name, cdFuturesRestClient, cdFuturesSocketClient, lf.CreateLogger<AccountDataProvider>());
+            return accountDataProvider;
+        }
+
+        private static AccountDataProvider CreateBinanceAccountDataProvider(Account account, IServiceProvider services)
+        {
+            BinanceRestClient client = new BinanceRestClient(options =>
+            {
+                options.ApiCredentials = new ApiCredentials(account.ApiKey, account.ApiSecret);
+                options.AutoTimestamp = true;
+            });
+            BinanceSocketClient socketClient = new BinanceSocketClient(options =>
+            {
+                options.ApiCredentials = new ApiCredentials(account.ApiKey, account.ApiSecret);
+                options.AutoReconnect = true;
+            });
+            var binanceCdFuturesRestClientLogger = services.GetRequiredService<ILogger<BinanceCdFuturesRestClient>>();
+            var cdFuturesRestClient = new BinanceCdFuturesRestClient(client);
+            var cdFuturesSocketClient = new BinanceCdFuturesSocketClient(socketClient);
+            var lf = services.GetRequiredService<ILoggerFactory>();
+            var accountDataProvider = new AccountDataProvider(account.Name, cdFuturesRestClient, cdFuturesSocketClient, lf.CreateLogger<AccountDataProvider>());
             return accountDataProvider;
         }
     }

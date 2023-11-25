@@ -44,7 +44,7 @@ namespace CoinDashHub.Exchanges
                         return data;
                     throw new InvalidOperationException(error.Message);
                 });
-            return new BybitUpdateSubscription(subscription);
+            return new ExchangeUpdateSubscription(subscription);
         }
 
         public async Task<IUpdateSubscription> SubscribeToPositionUpdatesAsync(Action<Position> handler,
@@ -70,7 +70,7 @@ namespace CoinDashHub.Exchanges
                         return data;
                     throw new InvalidOperationException(error.Message);
                 });
-            return new BybitUpdateSubscription(subscription);
+            return new ExchangeUpdateSubscription(subscription);
         }
     }
 }

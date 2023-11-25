@@ -3,13 +3,13 @@ using CryptoExchange.Net.Sockets;
 
 namespace CoinDashHub.Exchanges
 {
-    public class BybitUpdateSubscription : IUpdateSubscription
+    public class ExchangeUpdateSubscription : IUpdateSubscription
     {
         private readonly UpdateSubscription m_subscription;
 
         public event Action? ConnectionLost;
 
-        public BybitUpdateSubscription(UpdateSubscription subscription)
+        public ExchangeUpdateSubscription(UpdateSubscription subscription)
         {
             m_subscription = subscription;
             m_subscription.ConnectionLost += OnConnectionLost;

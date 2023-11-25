@@ -103,7 +103,7 @@ namespace CoinDashHub.Exchanges
                         throw new InvalidOperationException(error.Message);
                     foreach (var closedPnl in data.List)
                     {
-                        var closedPnlTrade = closedPnl.ClosedPnlTrade();
+                        var closedPnlTrade = closedPnl.ToClosedPnlTrade();
                         closedPnlTrades.Add(closedPnlTrade);
                     }
 

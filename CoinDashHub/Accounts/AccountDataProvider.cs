@@ -1,7 +1,6 @@
 ﻿using CoinDashHub.Exchanges;
 using CoinDashHub.Model;
 using Nito.AsyncEx;
-using System.Diagnostics.Contracts;
 
 namespace CoinDashHub.Accounts
 {
@@ -14,7 +13,7 @@ namespace CoinDashHub.Accounts
         private readonly ILogger<AccountDataProvider> m_logger;
         private readonly List<IUpdateSubscription> m_subscriptions;
         private readonly AsyncLock m_lock;
-        private readonly Dictionary<string, Position> m_positions;
+        private readonly Dictionary<SymbolPosition, Position> m_positions;
         private readonly Dictionary<string, ClosedPnlTrade> m_closedTrades;
         private readonly TimeSpan m_oldestClosedTrade = TimeSpan.FromDays(5);
 
@@ -23,7 +22,7 @@ namespace CoinDashHub.Accounts
         {
             m_lock = new AsyncLock();
             m_subscriptions = new List<IUpdateSubscription>();
-            m_positions = new Dictionary<string, Position>();
+            m_positions = new Dictionary<SymbolPosition, Position>();
             m_restClient = restClient;
             m_socketClient = socketClient;
             m_logger = logger;
@@ -88,7 +87,7 @@ namespace CoinDashHub.Accounts
             var positions = await m_restClient.GetPositionsAsync(cancel);
             using var _ = await m_lock.LockAsync();
             foreach (Position position in positions)
-                m_positions[position.Symbol] = position;
+                m_positions[new SymbolPosition(position.Symbol, position.Side)] = position;
             Positions = positions;
         }
 
@@ -132,9 +131,9 @@ namespace CoinDashHub.Accounts
         {
             using var _ = m_lock.Lock();
             if (obj.Quantity <= 0)
-                m_positions.Remove(obj.Symbol);
+                m_positions.Remove(new SymbolPosition(obj.Symbol, obj.Side));
             else
-                m_positions[obj.Symbol] = obj;
+                m_positions[new SymbolPosition(obj.Symbol, obj.Side)] = obj;
 
             Positions = m_positions.Values.ToArray();
         }
@@ -164,7 +163,6 @@ namespace CoinDashHub.Accounts
         public Task<DailyPnl[]> GetDailyPnlAsync(CancellationToken cancel = default)
         {
             using var _ = m_lock.Lock();
-            var now = DateTime.UtcNow;
             var closedTrades = m_closedTrades.Values.ToArray();
             var dailyPnl = closedTrades.GroupBy(x => x.UpdateTime.Date)
                 .Select(x => new DailyPnl
@@ -189,5 +187,9 @@ namespace CoinDashHub.Accounts
             foreach (var expiredTrade in expiredTrades)
                 m_closedTrades.Remove(expiredTrade.Key);
         }
+
+        // ReSharper disable NotAccessedPositionalProperty.Local
+        private readonly record struct SymbolPosition(string Symbol, PositionSide Side);
+        // ReSharper restore NotAccessedPositionalProperty.Local
     }
 }
