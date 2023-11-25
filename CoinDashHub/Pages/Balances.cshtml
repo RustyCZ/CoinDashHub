@@ -1,0 +1,30 @@
+﻿@page
+@model CoinDashHub.Pages.BalancesModel
+@{
+    ViewData["Title"] = "Balances";
+}
+
+<h1>Balances</h1>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Account</th>
+        <th>Equity</th>
+        <th>WalletBalance</th>
+        <th>UnrealizedPnL</th>
+        <th>RealizedPnL</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var account in Model.Balances)
+    {
+        <tr>
+            <td>@account.Name</td>
+            <td>@account.Balance.Equity</td>
+            <td>@account.Balance.WalletBalance</td>
+            <td>@account.Balance.UnrealizedPnl</td>
+            <td>@account.Balance.RealizedPnl</td>
+        </tr>
+    }
+    </tbody>
+</table>

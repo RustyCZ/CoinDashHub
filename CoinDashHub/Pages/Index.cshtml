@@ -1,0 +1,54 @@
+﻿@page
+@model IndexModel
+@{
+}
+
+<h1>Account exposures</h1>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Account</th>
+        <th>WalletExposure %</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var account in Model.AccountExposures)
+    {
+        <tr>
+            <td>@account.AccountName</td>
+            <td>@account.WalletExposure</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<h1>Positions</h1>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Account</th>
+        <th>Symbol</th>
+        <th>Side</th>
+        <th>Quantity</th>
+        <th>AveragePrice</th>
+        <th>PositionValue</th>
+        <th>UnrealizedPnl</th>
+        <th>WalletExposure %</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var position in Model.Positions)
+    {
+        <tr>
+            <td>@position.AccountName</td>
+            <td>@position.Position.Symbol</td>
+            <td>@position.Position.Side</td>
+            <td>@position.Position.Quantity</td>
+            <td>@position.Position.AveragePrice</td>
+            <td>@position.PositionValue</td>
+            <td style="background-color: @(position.Position.UnrealizedPnl > 0 ? "green" : "red")">@position.Position.UnrealizedPnl</td>
+            <td>@position.WalletExposure</td>
+        </tr>
+    }
+    </tbody>
+</table>

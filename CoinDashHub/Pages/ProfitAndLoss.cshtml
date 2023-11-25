@@ -1,0 +1,24 @@
+﻿@page
+@model CoinDashHub.Pages.ProfitAndLossModel
+@{
+}
+<h1>Profit and Loss</h1>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Account</th>
+        <th>Date</th>
+        <th>PnL</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var pnl in Model.ProfitAndLoss)
+    {
+        <tr>
+            <td style="@(pnl.AccountName == "_Total" ? "background-color: yellow" : "")">@pnl.AccountName</td>
+            <td>@pnl.DailyPnl.Date</td>
+            <td style="background-color: @(pnl.DailyPnl.Pnl > 0 ? "green" : "red")">@pnl.DailyPnl.Pnl</td>
+        </tr>
+    }
+    </tbody>
+</table>
