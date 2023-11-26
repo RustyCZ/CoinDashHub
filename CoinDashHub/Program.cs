@@ -1,12 +1,16 @@
+using System.Security.Claims;
+using AspNetCore.Authentication.Basic;
 using Binance.Net.Clients;
 using Bybit.Net.Clients;
 using CoinDashHub.Accounts;
+using CoinDashHub.Authentication;
 using CoinDashHub.Configuration;
 using CoinDashHub.Exchanges;
 using CoinDashHub.Helpers;
 using CoinDashHub.Services;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CoinDashHub
 {
@@ -21,6 +25,24 @@ namespace CoinDashHub
             if (configuration == null)
                 throw new InvalidOperationException("Missing configuration.");
 
+            // add basic authentication
+            bool useDashboardLogin = !string.IsNullOrWhiteSpace(configuration.DashboardLogin.Username) &&
+                                     !string.IsNullOrWhiteSpace(configuration.DashboardLogin.Password);
+            if (useDashboardLogin)
+            {
+                builder.Services.AddOptions<BasicUserValidationServiceOptions>().Configure(o =>
+                {
+                    o.Password = configuration.DashboardLogin.Password;
+                    o.Username = configuration.DashboardLogin.Username;
+                });
+                builder.Services.AddAuthentication(BasicDefaults.AuthenticationScheme)
+                    .AddBasic<BasicUserValidationService>(options => { options.Realm = "CoinDashHub"; });
+                builder.Services.AddAuthorization(options =>
+                {
+                    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                });
+            }
+            
             builder.Services.AddRazorPages();
             builder.Services.AddHostedService<CoinDashDataService>();
             builder.Services.AddSingleton<IEnumerable<IAccountDataProvider>>(sp =>
@@ -61,7 +83,8 @@ namespace CoinDashHub
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            if(useDashboardLogin) 
+                app.UseAuthentication();
             app.UseAuthorization();
             app.MapRazorPages();
             app.Run();

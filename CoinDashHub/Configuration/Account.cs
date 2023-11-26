@@ -7,4 +7,6 @@
         public string ApiSecret { get; set; } = string.Empty;
         public Exchange Exchange { get; set; }
     }
+
+
 }
