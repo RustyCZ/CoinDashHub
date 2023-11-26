@@ -28,9 +28,12 @@ namespace CoinDashHub
                 List<IAccountDataProvider> accountDataProviders = new List<IAccountDataProvider>();
                 foreach (var account in configuration.Accounts)
                 {
+                    if (string.IsNullOrWhiteSpace(account.ApiKey) || string.IsNullOrWhiteSpace(account.ApiSecret))
+                        continue;
                     var accountDataProvider = CreateAccountDataProvider(account, sp);
                     accountDataProviders.Add(accountDataProvider);
                 }
+
                 return accountDataProviders;
             });
 
@@ -95,7 +98,8 @@ namespace CoinDashHub
             var cdFuturesRestClient = new BybitCdFuturesRestClient(client, bybitCdFuturesRestClientLogger);
             var cdFuturesSocketClient = new BybitCdFuturesSocketClient(bybitSocketClient);
             var lf = services.GetRequiredService<ILoggerFactory>();
-            var accountDataProvider = new AccountDataProvider(account.Name, cdFuturesRestClient, cdFuturesSocketClient, lf.CreateLogger<AccountDataProvider>());
+            var accountDataProvider = new AccountDataProvider(account.Name, cdFuturesRestClient, cdFuturesSocketClient,
+                lf.CreateLogger<AccountDataProvider>()); 
             return accountDataProvider;
         }
 
@@ -106,16 +110,13 @@ namespace CoinDashHub
                 options.ApiCredentials = new ApiCredentials(account.ApiKey, account.ApiSecret);
                 options.AutoTimestamp = true;
             });
-            BinanceSocketClient socketClient = new BinanceSocketClient(options =>
-            {
-                options.ApiCredentials = new ApiCredentials(account.ApiKey, account.ApiSecret);
-                options.AutoReconnect = true;
-            });
-            var binanceCdFuturesRestClientLogger = services.GetRequiredService<ILogger<BinanceCdFuturesRestClient>>();
+            var binanceCdFuturesRestClientLogger = services.GetRequiredService<ILogger<BinanceCdFuturesSocketClient>>();
             var cdFuturesRestClient = new BinanceCdFuturesRestClient(client);
-            var cdFuturesSocketClient = new BinanceCdFuturesSocketClient(socketClient);
+            var cdFuturesSocketClient =
+                new BinanceCdFuturesSocketClient(cdFuturesRestClient, binanceCdFuturesRestClientLogger);
             var lf = services.GetRequiredService<ILoggerFactory>();
-            var accountDataProvider = new AccountDataProvider(account.Name, cdFuturesRestClient, cdFuturesSocketClient, lf.CreateLogger<AccountDataProvider>());
+            var accountDataProvider = new AccountDataProvider(account.Name, cdFuturesRestClient, cdFuturesSocketClient,
+                lf.CreateLogger<AccountDataProvider>());
             return accountDataProvider;
         }
     }
