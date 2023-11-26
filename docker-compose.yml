@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+  coindashhub:
+    image: coindashhub
+    build:
+      context: .
+      dockerfile: CoinDashHub/Dockerfile
+    ports:
+        - 8092:80
+    environment:
+        - CD_CoinDashHub__DashboardLogin__Username=
+        - CD_CoinDashHub__DashboardLogin__Password=
+        - CD_CoinDashHub__Accounts__0__Name=Account01
+        - CD_CoinDashHub__Accounts__0__ApiKey=
+        - CD_CoinDashHub__Accounts__0__ApiSecret=
+        - CD_CoinDashHub__Accounts__0__Exchange=Bybit
+        - CD_CoinDashHub__Accounts__1__Name=Account02
+        - CD_CoinDashHub__Accounts__1__ApiKey=
+        - CD_CoinDashHub__Accounts__1__ApiSecret=
+        - CD_CoinDashHub__Accounts__1__Exchange=Binance
