@@ -17,7 +17,7 @@ namespace CoinDashHub.Mapping
         public static Balance ToBalance(this BinanceUsdFuturesAccountBalance balance)
         {
             return new Balance(
-                balance.CrossWalletBalance - balance.CrossUnrealizedPnl,
+                balance.CrossWalletBalance + balance.CrossUnrealizedPnl,
                 balance.CrossWalletBalance,
                 balance.CrossUnrealizedPnl,
                 0);
